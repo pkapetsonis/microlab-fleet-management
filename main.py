@@ -1,5 +1,5 @@
-from flask import *
-from flask_socketio import SocketIO, emit, send
+from flask import Flask, render_template, jsonify, request
+from flask_socketio import SocketIO, emit
 from threading import Thread
 import time
 
@@ -19,29 +19,34 @@ def start_streaming():
         while stream:
             emit('data', {'state': state}, broadcast=True, namespace='/')
             state += 1
-            time.sleep(1)
+            time.sleep(0.05)
 
 
 broadcast_thread = None
+n_clients = 0
 
 @socketio.on('connect')
 def test_connect(auth):
-    global broadcast_thread
+    global broadcast_thread, n_clients
     print('client connected')
+    n_clients += 1
     # send('ok')
-    # if not stream:
-    print("Initializing thread")
-    broadcast_thread = Thread(target=start_streaming)
-    #broadcast_thread.
-    broadcast_thread.start()
+    if not stream:
+        print("Initializing thread")
+        broadcast_thread = Thread(target=start_streaming)
+        broadcast_thread.start()
 
 
 @socketio.on('disconnect')
 def test_disconnect():
-    global stream
+    global stream, n_clients, broadcast_thread
     print('Client disconnected')
-    stream = False
-    broadcast_thread.join()
+    n_clients -= 1
+
+    if n_clients <= 0 and broadcast_thread:
+        stream = False
+        broadcast_thread.join()
+        broadcast_thread = None
 
 
 
@@ -54,6 +59,8 @@ def ifnos():
     if(request.method == 'GET'):
         data = "hello world"
         return jsonify({'data': data})
+
+    return ""
 
 # @app.route("/info/r1")
 # def info():
