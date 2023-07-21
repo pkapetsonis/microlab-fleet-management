@@ -19,7 +19,7 @@ def start_streaming():
         while stream:
             emit('data', {'state': state}, broadcast=True, namespace='/')
             state += 1
-            time.sleep(0.05)
+            time.sleep(1)
 
 
 broadcast_thread = None
@@ -42,7 +42,6 @@ def test_disconnect():
     print('Client disconnected')
     stream = False
     broadcast_thread.join()
-    
 
 
 
@@ -53,7 +52,6 @@ def index():
 @app.route('/info/r1', methods = ['GET', 'POST'])
 def ifnos():
     if(request.method == 'GET'):
-  
         data = "hello world"
         return jsonify({'data': data})
 
@@ -64,4 +62,5 @@ def ifnos():
 
 if __name__ == '__main__':
     # app.run(port=5000, debug=True)
-    socketio.run(app, port=5000, debug=True )
+    socketio.run(host='0.0.0.0', app=app, port=5000, debug=True)
+

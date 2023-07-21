@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fabric"></script>
     <script src="{{ url_for('static', filename='scripts/robot_data.js') }}" defer></script>
     <title>Fleet Management</title>
 </head>
@@ -19,7 +20,7 @@
     </div>
     <div id="app-area">
         <div id="map-area">
-            <!-- <img id ="map" src="resources/map.jpg" alt=""> -->
+            <canvas id="map-canvas"></canvas>
         </div>
         <div id="fleet-area">
             <div id="list-area">

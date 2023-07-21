@@ -1,70 +1,55 @@
-html,
 body{
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     margin: 0px;
     background-color: gold;
+    display: flex;
+    flex-direction: column;
 }
 
 #logo-div {
-    display: flex;
-    align-items: center;
-    justify-content: left;
-    width: 5%;
 }
 
 #title-div {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 95%;
+    flex-grow: 1;
+    text-align: center;
 }
 
 #main-title {
-    display: flex;
-    width: fit-content;
     text-align: center;
     font-family: Arial, Helvetica, sans-serif;
-    margin: 0px;
-    height: 100%
+    margin: 0;
+    padding: 0;
 }
 
 #title-area {
+    flex-basis:5%;
     display: flex;
-    height: 5%;
     width: 100%;
     margin: 0px;
 }
 
+#map-canvas {
+    width: 100%;
+    height: 100%;
+    background-color: red;
+}
 #app-area {
     display: flex;
-    height: 95%;
+    flex-grow: 1;
     width: 100%;
     margin: 0px;
 }
-
-/* #map {
-    display: flex;
-    height: 100%;
-    width: 100%;
-    border:1px solid black;
-} */
 
 #map-area {
-    display: flex;
-    width: 69%;
-    height:100%;
-    margin: 0px;
-    float: left;
-    border:1px solid black;
-    background: lightgray;
+    flex-grow: 1 !important;
 }
+
 
 #fleet-area {
     /* display: flex; */
-    width: 30%;
-    height: 100%;
-    margin: 0px;
-    float: left;
+    flex-basis: 30%;
+    flex-grow: 0;
     border:1px solid black;
 }
 
