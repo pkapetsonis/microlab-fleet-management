@@ -1,0 +1,139 @@
+html,
+body{
+    height: 100%;
+    margin: 0px;
+    background-color: gold;
+}
+
+#logo-div {
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    width: 5%;
+}
+
+#title-div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 95%;
+}
+
+#main-title {
+    display: flex;
+    width: fit-content;
+    text-align: center;
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 0px;
+    height: 100%
+}
+
+#title-area {
+    display: flex;
+    height: 5%;
+    width: 100%;
+    margin: 0px;
+}
+
+#app-area {
+    display: flex;
+    height: 95%;
+    width: 100%;
+    margin: 0px;
+}
+
+/* #map {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    border:1px solid black;
+} */
+
+#map-area {
+    display: flex;
+    width: 69%;
+    height:100%;
+    margin: 0px;
+    float: left;
+    border:1px solid black;
+    background: lightgray;
+}
+
+#fleet-area {
+    /* display: flex; */
+    width: 30%;
+    height: 100%;
+    margin: 0px;
+    float: left;
+    border:1px solid black;
+}
+
+#list-area {
+    /* display: flex; */
+    width: 100%;
+    height: 30%;
+    margin: 0px;
+    border:1px solid black;
+    border-bottom: 0px;
+
+}
+
+.robot-div {
+    display: flex;
+    align-items: center;
+    border:1px solid black;
+    text-align: left;
+    width: 100%;
+    height: 50%;
+    margin: 0px;
+}
+
+.robot-image  {
+    display: flex;
+    height: 70%;
+    width: 17.5%;
+    float: left;
+}
+
+.robot-button,
+.robot-button:visited {
+
+    display: flex;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    font-size: x-large;
+    align-items: center;
+    justify-content: center;    
+    width: 52.5%;
+    text-decoration: none;
+
+}
+
+.status-image  {
+    display: flex;
+    height: 40%;
+    width: 30%;
+    float: right;
+    
+}
+
+#info-area {
+    display: flex;
+    margin: 0px;
+    width: 100%;
+    height: 64%;
+    border: 1px solid black
+}
+
+#info-title {
+    display:flex; 
+    border: 1px solid black;
+    border-bottom: 0px;
+    border-top: 2px solid black;
+    font-family: Arial, Helvetica, sans-serif; 
+    width: 100%; 
+    height: 5%; 
+    justify-content: center; 
+    align-items: center; 
+    margin: 0px;
+}
