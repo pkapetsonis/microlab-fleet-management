@@ -33,6 +33,7 @@ body{
     width: 100%;
     height: 100%;
     background-color: red;
+    /* transform: scaleY(-1); */
 }
 #app-area {
     display: flex;
