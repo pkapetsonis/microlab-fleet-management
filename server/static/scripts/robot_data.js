@@ -64,3 +64,11 @@ async function get_robot_data(robot_id) {
     var data = await response.json();
     robot_info_p.innerText = data['data'];
 }
+
+const socketc = io.connect();
+
+canvas.on("mouse:down", (event) => {
+    var pointer = canvas.getPointer(event);
+    console.log("Coordinates of the pointer relative to the object are: ", pointer);
+    socketc.emit('datatest', pointer);
+});

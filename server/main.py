@@ -50,9 +50,14 @@ def listen_proxy_thread():
             except TimeoutError:
                 print("Connection timeout!")
                 run = False
+            
+
 
         sock.close()
 
+@socketio.on('datatest')
+def on_message(msg):
+    print(msg)
 
 # stream = False
 # def start_streaming():
