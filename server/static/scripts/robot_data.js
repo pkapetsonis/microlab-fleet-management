@@ -1,5 +1,3 @@
-
-const robot_info_p = document.querySelector("#robot-info");
 const map_area = document.querySelector("#map-area");
 const maw = map_area.clientWidth;
 const mah = map_area.clientHeight;
@@ -17,26 +15,28 @@ canvas.viewportTransform[3] = 0.5;
 
 
 var circle = new fabric.Circle({
-   top: 0,
-   left: 0,
-   radius: 30,
+    top: 0,
+    left: 0,
+    radius: 5,
 });
-
 canvas.add(circle);
-const dummy = new fabric.Triangle({
- top: 100,
- left: 100,
- width: 60,
- height: 70,
- angle: 0,
- fill: 'black',
-});
 
-fabric.Image.fromURL('/static/images/ev3-top-down.jpeg', function (oi) {
-    oi.set({width: 100, height:100});
-    canvas.add(oi);
+const robot = new fabric.Triangle({
+    top: 0,
+    left: 0,
+    width: 60,
+    height: 70,
+    angle: 0,
+    fill: 'black',
+    originX: "center",
+    originY: "center"
 });
-canvas.add(dummy);
+canvas.add(robot);
+
+// fabric.Image.fromURL('/static/images/ev3-top-down.jpeg', function (oi) {
+//     oi.set({width: 100, height:100});
+//     canvas.add(oi);
+// });
 
 var socket = io();
 socket.on('connect', function() {
@@ -44,16 +44,12 @@ socket.on('connect', function() {
 });
 
 socket.on('data', function(data) {
-    //console.log(data);
-    // dummy.set({angle : data['state']});
-    // const state = data['state'];
-    //dummy.angle(data['heading']);
-    const freq = 0.01;
-    dummy.set({
+    robot.set({
         left: data['position'][0],
-        top: -data['position'][1],
-        angle: -data['heading'] + 90
+        top: -data['position'][1]
+        // angle: -data['heading'] + 90
     });
+    robot.rotate(-data['heading'] + 90);
     canvas.renderAll();
 });
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from ev3dev2.wheel import Wheel
-from ev3dev2.motor import MoveDifferential, OUTPUT_B, OUTPUT_C, SpeedRPM
-from ev3dev2.sensor.lego import GyroSensor
+from ev3dev2.motor import MoveDifferential, OUTPUT_B, OUTPUT_C, SpeedRPM, SpeedPercent, SpeedNativeUnits, SpeedInvalid, speed_to_speedvalue
+from ev3dev2.sensor.lego import GyroSensor, InfraredSensor
 from ev3dev2.button import Button
 from ev3dev2 import ThreadNotRunning
 import _thread
@@ -97,26 +97,77 @@ class MyMoveDifferential(MoveDifferential):
             while not self.odometry_thread_run:
                 pass
 
-    def on_to_coordinates(self, speed, x_target_mm, y_target_mm, brake=True, block=True):
-            """
-            Drive to (``x_target_mm``, ``y_target_mm``) coordinates at ``speed``
-            """
-            if not self.odometry_thread_run:
-                raise ThreadNotRunning("odometry_start() must be called to track robot coordinates")
+    def on_to_coordinates_pid(self, speed, x_target_mm, y_target_mm, brake=True, block=True):
+        """
+        Drive to (``x_target_mm``, ``y_target_mm``) coordinates at ``speed``
+        """
+        if not self.odometry_thread_run:
+            raise ThreadNotRunning("odometry_start() must be called to track robot coordinates")
 
-            # stop moving
-            self.off(brake='hold')
+        # stop moving
+        self.off(brake='hold')
 
-            # rotate in place so we are pointed straight at our target
+        # rotate in place so we are pointed straight at our target
+        x_delta = x_target_mm - self.x_pos_mm
+        y_delta = y_target_mm - self.y_pos_mm
+        angle_target_radians = math.atan2(y_delta, x_delta)
+        angle_target_degrees = math.degrees(angle_target_radians)
+        self.turn_to_angle(speed, angle_target_degrees, brake=True, block=True, use_gyro=True)
+
+        distance_mm = math.sqrt(pow(self.x_pos_mm - x_target_mm, 2) + pow(self.y_pos_mm - y_target_mm, 2))
+
+        kp=2; ki=0.05; kd=3.2
+        sleep_time= 0.5
+        DIST_ERROR = 3
+        integral = 0.0
+        last_error = 0.0
+        derivative = 0.0
+        speed = speed_to_speedvalue(speed)
+        speed_native_units = speed.to_native_units(self.left_motor)
+
+        print("dist", distance_mm)
+        while distance_mm > DIST_ERROR:
+            print("dist", distance_mm)
             x_delta = x_target_mm - self.x_pos_mm
             y_delta = y_target_mm - self.y_pos_mm
             angle_target_radians = math.atan2(y_delta, x_delta)
             angle_target_degrees = math.degrees(angle_target_radians)
-            self.turn_to_angle(speed, angle_target_degrees, brake=True, block=True, use_gyro=True)
 
-            # drive in a straight line to the target coordinates
+            current_angle = self._gyro.circle_angle()
+            if current_angle > 180:
+                current_angle = 360 - current_angle
+            error = current_angle - angle_target_degrees
+
+            print("cuurent:", current_angle)
+            print("target:", angle_target_degrees)
+            print("error:", error)
+            integral = integral + error
+            derivative = error - last_error
+            last_error = error
+            turn_native_units = (kp * error) + (ki * integral) + (kd * derivative)
+
             distance_mm = math.sqrt(pow(self.x_pos_mm - x_target_mm, 2) + pow(self.y_pos_mm - y_target_mm, 2))
-            self.on_for_distance(speed, distance_mm, brake, block)
+
+
+            left_speed = SpeedNativeUnits(speed_native_units - turn_native_units)
+            right_speed = SpeedNativeUnits(speed_native_units + turn_native_units)
+
+            print(left_speed, right_speed)
+
+
+            try:
+                self.on(left_speed, right_speed)
+            except SpeedInvalid as e:
+                #log.exception(e)
+                self.stop()
+                
+                raise Exception("The robot is moving too fast to follow the angle")
+            
+            if sleep_time:
+                time.sleep(sleep_time)
+
+
+        self.stop()
 
 class MyGyroSensor(GyroSensor):
 
@@ -137,8 +188,8 @@ class MyGyroSensor(GyroSensor):
         return v
 
 
-UDP_IP = "192.168.1.103"
-UDP_PORT = 5010
+UDP_IP = "192.168.1.116"
+UDP_PORT = 5005
 MESSAGE = b"Hello, World!\n"
 TRACK = 114
 UPDATE_TIMER = 0.200 # ms
@@ -157,7 +208,7 @@ drive_base.gyro = MyGyroSensor()
 drive_base.gyro.calibrate()
 drive_base.gyro.reset()
 
-
+ir_sensor = InfraredSensor()
 
 def send_udp():
     gca = drive_base.gyro.circle_angle()
@@ -202,22 +253,51 @@ def polygon_movement(n, length):
 def weird_movement():
     drive_base.on_arc_right(SpeedRPM(60), 200, 2 * pi * 200)
     time.sleep(1)
-    drive_base.on_to_coordinates(SpeedRPM(60), 800, 200)
+    drive_base.on_to_coordinates_pid(SpeedRPM(60), 800, 200)
     time.sleep(1)
-    drive_base.on_to_coordinates(SpeedRPM(60), 500, 400)
+    drive_base.on_to_coordinates_pid(SpeedRPM(60), 500, 400)
     time.sleep(1)
-    drive_base.on_to_coordinates(SpeedRPM(60), 0, 0)
+    drive_base.on_to_coordinates_pid(SpeedRPM(60), 0, 0)
+
+
+def ir_control():
+    print("ir listening")
+    IR_SPEED = 30
+    while True:
+        if ir_sensor.bottom_left(4):
+            break
+
+        if ir_sensor.top_left():
+            drive_base.left_motor.on(SpeedPercent(IR_SPEED))
+        elif ir_sensor.bottom_left():
+            drive_base.left_motor.on(SpeedPercent(-IR_SPEED))
+        else:
+            drive_base.left_motor.stop()
+
+        if ir_sensor.top_right():
+            drive_base.right_motor.on(SpeedPercent(IR_SPEED))
+        elif ir_sensor.bottom_right():
+            drive_base.right_motor.on(SpeedPercent(-IR_SPEED))
+        else:
+            drive_base.right_motor.stop()
+
+
+        time.sleep(0.05)
+
 
 
 drive_base.odometry_start()
 send_thread = Thread(target=send_upd_thread)
 send_thread.start()
 
+# ir_control()
+
 # polygon_movement(6, 500)
 weird_movement()
 
+ir_control()
 # time.sleep(4)
-btn.wait_for_pressed(['enter'])
+# btn.wait_for_pressed(['enter'])
 
 drive_base.odometry_stop()
 drive_base.stop()

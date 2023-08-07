@@ -14,7 +14,6 @@ UDP_LISTEN_PORT = 5005
 SOCKET_TIMEOUT = 30
 
 listen_thread = None
-@app.before_first_request
 def create_listen_thread():
     global listen_thread
     listen_thread = Thread(target=listen_proxy_thread)
@@ -26,11 +25,12 @@ def listen_proxy_thread():
         print('starting listen thread')
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind((UDP_LISTEN_IP, UDP_LISTEN_PORT))
         # robot_sock, robot_addr = sock.accept()
 
         #print(f"Connection from robot {robot_addr}") 
-        sock.settimeout(SOCKET_TIMEOUT)
+        # sock.settimeout(SOCKET_TIMEOUT)
         run = True
         while run:
             try:
@@ -43,12 +43,14 @@ def listen_proxy_thread():
                     'heading': float(data[1].split(' ')[1]),
                     'position': [float(x) for x in data[2][data[2].find('(')+1:-1].split(',')]
                 }
-            
+
                 emit('data', payload, broadcast=True, namespace='/')
+            except ValueError as e:
+                print("Ignore data:", e)
             except TimeoutError:
                 print("Connection timeout!")
                 run = False
-        
+
         sock.close()
 
 
@@ -109,6 +111,7 @@ def ifnos():
 
 if __name__ == '__main__':
     # app.run(port=5000, debug=True)
-    create_listen_thread()
+    with app.app_context():
+        create_listen_thread()
     socketio.run(host='0.0.0.0', app=app, port=5000, log_output=False, debug=False, use_reloader=False)
     listen_thread.join()
