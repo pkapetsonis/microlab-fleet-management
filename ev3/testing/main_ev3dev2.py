@@ -97,6 +97,22 @@ class MyMoveDifferential(MoveDifferential):
             while not self.odometry_thread_run:
                 pass
 
+    def get_target_circle_angle(self, target_x_mm, target_y_mm):
+        x_delta = target_x_mm - self.x_pos_mm
+        y_delta = target_y_mm - self.y_pos_mm
+        angle_target_radians = math.atan2(y_delta, x_delta)
+        angle_target_degrees = math.degrees(angle_target_radians)
+
+        return angle_target_degrees % 360
+
+
+    def follow_until_point(self, slf, px_mm, py_mm):
+        DIST_ERROR = 3
+        d = math.sqrt(pow(self.x_pos_mm - px_mm, 2) + pow(self.y_pos_mm - py_mm, 2)) 
+        print("dist:", d)
+        return d > DIST_ERROR
+    
+
     def on_to_coordinates_pid(self, speed, x_target_mm, y_target_mm, brake=True, block=True):
         """
         Drive to (``x_target_mm``, ``y_target_mm``) coordinates at ``speed``
@@ -113,61 +129,125 @@ class MyMoveDifferential(MoveDifferential):
         angle_target_radians = math.atan2(y_delta, x_delta)
         angle_target_degrees = math.degrees(angle_target_radians)
         self.turn_to_angle(speed, angle_target_degrees, brake=True, block=True, use_gyro=True)
+        self.turn_to_angle(speed, angle_target_degrees, brake=True, block=True, use_gyro=True)
 
         distance_mm = math.sqrt(pow(self.x_pos_mm - x_target_mm, 2) + pow(self.y_pos_mm - y_target_mm, 2))
 
-        kp=2; ki=0.05; kd=3.2
-        sleep_time= 0.5
-        DIST_ERROR = 3
+        kp=10; ki=0.05; kd=3.2
+    
+        self.follow_gyro_angle(kp=kp, ki=ki, kd=kd, 
+                               target_angle=angle_target_degrees,
+                               speed=speed, 
+                               follow_for=self.follow_until_point, 
+                               px_mm=x_target_mm, 
+                               py_mm=y_target_mm)
+        
+    def follow_gyro_angle(self,
+                          kp,
+                          ki,
+                          kd,
+                          speed,
+                          target_angle=0,
+                          sleep_time=0.01,
+                          follow_for=None,
+                          **kwargs):
+        """
+        PID gyro angle follower
+
+        ``kp``, ``ki``, and ``kd`` are the PID constants.
+
+        ``speed`` is the desired speed of the midpoint of the robot
+
+        ``target_angle`` is the angle we want to maintain
+
+        ``sleep_time`` is how many seconds we sleep on each pass through
+            the loop.  This is to give the robot a chance to react
+            to the new motor settings. This should be something small such
+            as 0.01 (10ms).
+
+        ``follow_for`` is called to determine if we should keep following the
+            desired angle or stop.  This function will be passed ``self`` (the current
+            ``MoveTank`` object). Current supported options are:
+            - ``follow_for_forever``
+            - ``follow_for_ms``
+
+        ``**kwargs`` will be passed to the ``follow_for`` function
+
+        Example:
+
+        .. code:: python
+
+            from ev3dev2.motor import OUTPUT_A, OUTPUT_B, MoveTank, SpeedPercent, follow_for_ms
+            from ev3dev2.sensor.lego import GyroSensor
+
+            # Instantiate the MoveTank object
+            tank = MoveTank(OUTPUT_A, OUTPUT_B)
+
+            # Initialize the tank's gyro sensor
+            tank.gyro = GyroSensor()
+
+            # Calibrate the gyro to eliminate drift, and to initialize the current angle as 0
+            tank.gyro.calibrate()
+
+            try:
+
+                # Follow the target_angle for 4500ms
+                tank.follow_gyro_angle(
+                    kp=11.3, ki=0.05, kd=3.2,
+                    speed=SpeedPercent(30),
+                    target_angle=0,
+                    follow_for=follow_for_ms,
+                    ms=4500
+                )
+            except FollowGyroAngleErrorTooFast:
+                tank.stop()
+                raise
+        """
+        if not self._gyro:
+            raise DeviceNotDefined(
+                "The 'gyro' variable must be defined with a GyroSensor. Example: tank.gyro = GyroSensor()")
+
+        target_angle = target_angle % 360
+
         integral = 0.0
         last_error = 0.0
         derivative = 0.0
         speed = speed_to_speedvalue(speed)
         speed_native_units = speed.to_native_units(self.left_motor)
 
-        print("dist", distance_mm)
-        while distance_mm > DIST_ERROR:
-            print("dist", distance_mm)
-            x_delta = x_target_mm - self.x_pos_mm
-            y_delta = y_target_mm - self.y_pos_mm
-            angle_target_radians = math.atan2(y_delta, x_delta)
-            angle_target_degrees = math.degrees(angle_target_radians)
-
+        while follow_for(self, **kwargs):
             current_angle = self._gyro.circle_angle()
-            if current_angle > 180:
-                current_angle = 360 - current_angle
-            error = current_angle - angle_target_degrees
+            target_angle = self.get_target_circle_angle(kwargs['px_mm'], kwargs['py_mm'])
+            error = current_angle - target_angle
+            # error = error % 360
+            # if error > 180:
+            #     error = 360 - error
 
-            print("cuurent:", current_angle)
-            print("target:", angle_target_degrees)
-            print("error:", error)
+            error = -error
+
             integral = integral + error
             derivative = error - last_error
             last_error = error
             turn_native_units = (kp * error) + (ki * integral) + (kd * derivative)
-
-            distance_mm = math.sqrt(pow(self.x_pos_mm - x_target_mm, 2) + pow(self.y_pos_mm - y_target_mm, 2))
-
-
+            # print("speed native", speed_native_units)
+            print("current", current_angle)
+            print("target", target_angle)
+            print("error", error, "pos: ", (self.x_pos_mm, self.y_pos_mm))
             left_speed = SpeedNativeUnits(speed_native_units - turn_native_units)
             right_speed = SpeedNativeUnits(speed_native_units + turn_native_units)
-
             print(left_speed, right_speed)
-
+            if sleep_time:
+                time.sleep(sleep_time)
 
             try:
                 self.on(left_speed, right_speed)
             except SpeedInvalid as e:
                 #log.exception(e)
                 self.stop()
-                
-                raise Exception("The robot is moving too fast to follow the angle")
-            
-            if sleep_time:
-                time.sleep(sleep_time)
-
-
+                # raise FollowGyroAngleErrorTooFast("The robot is moving too fast to follow the angle")
+                return
         self.stop()
+
 
 class MyGyroSensor(GyroSensor):
 
@@ -188,7 +268,7 @@ class MyGyroSensor(GyroSensor):
         return v
 
 
-UDP_IP = "192.168.1.116"
+UDP_IP = "192.168.1.103"
 UDP_PORT = 5005
 MESSAGE = b"Hello, World!\n"
 TRACK = 114
@@ -225,7 +305,9 @@ def send_udp():
 
 sock = socket.socket(socket.AF_INET, # Internet
                      socket.SOCK_DGRAM) # UD
+sock.setblocking(False)
 sock.connect((UDP_IP, UDP_PORT))
+
 # sock.send(MESSAGE)
 # sock.close()
 
@@ -235,9 +317,18 @@ udp_running = False
 def send_upd_thread():
     global udp_running
     udp_running = True
-
+   
     while udp_running:
         send_udp()
+        
+        try:
+            data = sock.recv(1024 ,)
+            if data:
+                print(data)
+            if len(data) > 0:
+                print("A")
+        except:
+            pass
         time.sleep(UPDATE_TIMER)
         
 
@@ -251,9 +342,9 @@ def polygon_movement(n, length):
 
 
 def weird_movement():
-    drive_base.on_arc_right(SpeedRPM(60), 200, 2 * pi * 200)
-    time.sleep(1)
-    drive_base.on_to_coordinates_pid(SpeedRPM(60), 800, 200)
+    # drive_base.on_arc_right(SpeedRPM(60), 200, 2 * pi * 200)
+    # time.sleep(1)
+    drive_base.on_to_coordinates_pid(SpeedRPM(40), 800, 200)
     time.sleep(1)
     drive_base.on_to_coordinates_pid(SpeedRPM(60), 500, 400)
     time.sleep(1)
@@ -293,7 +384,7 @@ send_thread.start()
 # ir_control()
 
 # polygon_movement(6, 500)
-weird_movement()
+# weird_movement()
 
 ir_control()
 # time.sleep(4)
