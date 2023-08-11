@@ -11,6 +11,8 @@ socketio = SocketIO(app)
 
 UDP_LISTEN_IP = '0.0.0.0'
 UDP_LISTEN_PORT = 5005
+UDP_IP = '192.168.1.156'
+UDP_PORT = 5005
 SOCKET_TIMEOUT = 30
 
 listen_thread = None
@@ -19,6 +21,7 @@ def create_listen_thread():
     listen_thread = Thread(target=listen_proxy_thread)
     listen_thread.start()
 
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 def listen_proxy_thread():
     with app.app_context():
@@ -55,9 +58,16 @@ def listen_proxy_thread():
 
         sock.close()
 
+sock.connect((UDP_IP, UDP_PORT))
+
 @socketio.on('datatest')
 def on_message(msg):
-    print(msg)
+    x = int(msg.get('x'))
+    y = int(msg.get('y'))
+
+    print(x, y)
+    sock.sendto(f"{x:+05d}{y:+05d}".encode(), (UDP_IP, UDP_PORT))
+    #sock.send()
 
 # stream = False
 # def start_streaming():
