@@ -3,8 +3,9 @@ from ev3dev2.wheel import Wheel
 from ev3dev2.motor import MoveDifferential, OUTPUT_B, OUTPUT_C, SpeedRPM, SpeedPercent, SpeedNativeUnits, SpeedInvalid, speed_to_speedvalue
 from ev3dev2.sensor.lego import GyroSensor, InfraredSensor
 from ev3dev2.button import Button
-from ev3dev2 import ThreadNotRunning
+from ev3dev2 import ThreadNotRunning, DeviceNotDefined
 import _thread
+import select
 
 
 import time
@@ -294,22 +295,20 @@ def send_udp():
     gca = drive_base.gyro.circle_angle()
     theta_wheels = drive_base.theta_wheels
 
-    sock.send("angle: {}\ngyro: {}\npos: ( {}, {})\n".format(
+    sock.sendto("angle: {}\ngyro: {}\npos: ( {}, {})\n".format(
         math.degrees(theta_wheels),
         gca, 
         drive_base.x_pos_mm, 
-        drive_base.y_pos_mm).encode()
+        drive_base.y_pos_mm).encode(),
+        (UDP_IP, UDP_PORT)
     )
 
 
 
 sock = socket.socket(socket.AF_INET, # Internet
                      socket.SOCK_DGRAM) # UD
-sock.setblocking(False)
-sock.connect((UDP_IP, UDP_PORT))
-
-# sock.send(MESSAGE)
-# sock.close()
+sock.setblocking(0)
+sock.bind((UDP_IP, UDP_PORT))
 
 
 
@@ -321,14 +320,12 @@ def send_upd_thread():
     while udp_running:
         send_udp()
         
-        try:
-            data = sock.recv(1024 ,)
-            if data:
-                print(data)
-            if len(data) > 0:
-                print("A")
-        except:
-            pass
+        data = sock.recv(1024)
+        ready = select.select([sock], [], [], 0)
+        if ready[0]:
+            data = sock.recv(1024)
+            print(repr(data))
+
         time.sleep(UPDATE_TIMER)
         
 
