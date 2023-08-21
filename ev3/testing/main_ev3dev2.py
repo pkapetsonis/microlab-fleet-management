@@ -6,7 +6,8 @@ from ev3dev2.button import Button
 from ev3dev2 import ThreadNotRunning, DeviceNotDefined
 import _thread
 import select
-
+import json
+import select
 
 import time
 from math import pi
@@ -14,7 +15,7 @@ from math import pi
 
 import socket
 import math
-from threading import Thread, Lock
+from threading import Thread, Lock, Semaphore
 
 btn = Button()
 
@@ -231,12 +232,12 @@ class MyMoveDifferential(MoveDifferential):
             last_error = error
             turn_native_units = (kp * error) + (ki * integral) + (kd * derivative)
             # print("speed native", speed_native_units)
-            print("current", current_angle)
-            print("target", target_angle)
-            print("error", error, "pos: ", (self.x_pos_mm, self.y_pos_mm))
+            # print("current", current_angle)
+            # print("target", target_angle)
+            # print("error", error, "pos: ", (self.x_pos_mm, self.y_pos_mm))
             left_speed = SpeedNativeUnits(speed_native_units - turn_native_units)
             right_speed = SpeedNativeUnits(speed_native_units + turn_native_units)
-            print(left_speed, right_speed)
+            # print(left_speed, right_speed)
             if sleep_time:
                 time.sleep(sleep_time)
 
@@ -269,6 +270,7 @@ class MyGyroSensor(GyroSensor):
         return v
 
 
+BIND_IP = '0.0.0.0'
 UDP_IP = "192.168.1.103"
 UDP_PORT = 5005
 MESSAGE = b"Hello, World!\n"
@@ -308,9 +310,43 @@ def send_udp():
 sock = socket.socket(socket.AF_INET, # Internet
                      socket.SOCK_DGRAM) # UD
 sock.setblocking(0)
-sock.bind((UDP_IP, UDP_PORT))
+sock.bind((BIND_IP, UDP_PORT))
 
 
+class CommandExecutor:
+
+    def __init__(self):
+        self.command_queue = []
+        self.queue_sem = Semaphore(0)
+        self.running = False
+
+    def start(self):
+        print('starting command executor')
+        self.running = True
+
+        while self.running:
+            if len(self.command_queue) == 0:
+                self.queue_sem.acquire()
+
+            if len(self.command_queue) == 0:
+                break
+
+            command = self.command_queue.pop(0)
+            # target_pos = command['waypoints']
+            for target_x, target_y in command['waypoints']:
+                drive_base.on_to_coordinates_pid(SpeedRPM(60), target_x, target_y)
+
+    def stop(self):
+        self.running = False
+        self.queue_sem.release()
+
+    
+    def add_command(self, command):
+        self.command_queue.append(command)
+        self.queue_sem.release()
+
+
+cex = CommandExecutor()
 
 udp_running = False
 def send_upd_thread():
@@ -320,11 +356,17 @@ def send_upd_thread():
     while udp_running:
         send_udp()
         
-        data = sock.recv(1024)
+        
         ready = select.select([sock], [], [], 0)
         if ready[0]:
             data = sock.recv(1024)
+            command = json.loads(data.decode())
             print(repr(data))
+            if command['type'] == 'path':
+                cex.add_command(command)
+            else:
+                cex.stop()
+            
 
         time.sleep(UPDATE_TIMER)
         
@@ -378,12 +420,15 @@ drive_base.odometry_start()
 send_thread = Thread(target=send_upd_thread)
 send_thread.start()
 
+
+cex.start()
+
 # ir_control()
 
 # polygon_movement(6, 500)
 # weird_movement()
 
-ir_control()
+# ir_control()
 # time.sleep(4)
 # btn.wait_for_pressed(['enter'])
 

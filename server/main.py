@@ -3,6 +3,9 @@ from flask_socketio import SocketIO, emit
 from threading import Thread
 import socket
 import time
+import json
+import logging
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -11,8 +14,8 @@ socketio = SocketIO(app)
 
 UDP_LISTEN_IP = '0.0.0.0'
 UDP_LISTEN_PORT = 5005
-UDP_IP = '192.168.1.198'
-UDP_PORT = 5006
+UDP_IP = '192.168.1.156'
+UDP_PORT = 5005
 SOCKET_TIMEOUT = 30
 
 listen_thread = None
@@ -22,8 +25,11 @@ def create_listen_thread():
     listen_thread.start()
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+current_robot_position = None
+
 
 def listen_proxy_thread():
+    global current_robot_position
     with app.app_context():
         print('starting listen thread')
 
@@ -37,12 +43,13 @@ def listen_proxy_thread():
                 data, addr = sock.recvfrom(1024)
                 data = data.decode()
                 # 
-                print(addr, data)
+                # print(addr, data)
                 data = data.split('\n')
                 payload = {
                     'heading': float(data[1].split(' ')[1]),
                     'position': [float(x) for x in data[2][data[2].find('(')+1:-1].split(',')]
                 }
+                current_robot_position = payload['position']
 
                 emit('data', payload, broadcast=True, namespace='/')
             except ValueError as e:
@@ -53,14 +60,30 @@ def listen_proxy_thread():
 
         sock.close()
 
-
 @socketio.on('datatest')
 def on_message(msg):
+    global com
     x = int(msg.get('x'))
-    y = int(msg.get('y'))
+    y = -int(msg.get('y'))
 
-    print(x, y)
-    sock.sendto(f"{x:+05d}{y:+05d}".encode(), (UDP_IP, UDP_PORT))
+    # print(x, y)
+    # sock.sendto(f"{x:+05d}{y:+05d}".encode(), (UDP_IP, UDP_PORT))
+
+    command = {
+        'type': 'path',
+        'waypoints': 
+            [
+                (x, y)
+            ]
+    }
+
+    # else:
+    #     command = {
+    #         'type': 'stop',
+    #     }
+    
+    print(command)
+    sock.sendto(json.dumps(command).encode(), (UDP_IP, UDP_PORT))
 
 
 @app.route("/")
@@ -77,6 +100,10 @@ def ifnos():
 
 if __name__ == '__main__':
     # app.run(port=5000, debug=True)
+
+    logging.getLogger('socketio').setLevel(logging.ERROR)
+    logging.getLogger('engineio').setLevel(logging.ERROR)
+    logging.getLogger('geventwebsocket.handler').setLevel(logging.ERROR)
     with app.app_context():
         create_listen_thread()
     socketio.run(host='0.0.0.0', app=app, port=5000, log_output=False, debug=False, use_reloader=False)
