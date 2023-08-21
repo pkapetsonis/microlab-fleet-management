@@ -33,10 +33,34 @@ const robot = new fabric.Triangle({
 });
 canvas.add(robot);
 
-// fabric.Image.fromURL('/static/images/ev3-top-down.jpeg', function (oi) {
-//     oi.set({width: 100, height:100});
-//     canvas.add(oi);
-// });
+// set up zooming 
+canvas.on('mouse:wheel', function(opt) {
+  var delta = opt.e.deltaY;
+  var zoom = canvas.getZoom();
+  zoom *= 0.999 ** delta;
+  if (zoom > 20) zoom = 20;
+  if (zoom < 0.01) zoom = 0.01;
+  canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+  opt.e.preventDefault();
+  opt.e.stopPropagation();
+});
+
+// handle panning
+var panning = false;
+canvas.on('mouse:up', function (e) {
+    panning = false;
+});
+
+canvas.on('mouse:down', function (e) {
+    panning = true;
+});
+canvas.on('mouse:move', function (e) {
+    if (panning && e && e.e) {
+        var units = 10;
+        var delta = new fabric.Point(e.e.movementX, e.e.movementY);
+        canvas.relativePan(delta);
+    }
+});
 
 var socket = io();
 socket.on('connect', function() {
@@ -67,8 +91,10 @@ async function get_robot_data(robot_id) {
 
 const socketc = io.connect();
 
-canvas.on("mouse:down", (event) => {
+
+// send data on click
+canvas.on("mouse:dblclick", (event) => {
     var pointer = canvas.getPointer(event);
-    console.log("Coordinates of the pointer relative to the object are: ", pointer);
+    console.log("pointer at", pointer);
     socketc.emit('datatest', pointer);
 });
