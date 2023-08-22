@@ -30,8 +30,6 @@ sock = socket.socket(socket.AF_INET, # Internet
 sock.setblocking(0)
 sock.bind((UDP_IP, 5006))
 
-sock.close()
-
 
 
 udp_running = False
