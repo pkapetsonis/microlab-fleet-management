@@ -90,13 +90,6 @@ def on_message(msg):
 def index():
     return render_template("index.html")
 
-@app.route('/info/r1', methods = ['GET', 'POST'])
-def ifnos():
-    if(request.method == 'GET'):
-        data = "hello world"
-        return jsonify({'data': data})
-
-    return ""
 
 if __name__ == '__main__':
     # app.run(port=5000, debug=True)

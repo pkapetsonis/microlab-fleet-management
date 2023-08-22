@@ -20,6 +20,7 @@ body{
     font-family: Arial, Helvetica, sans-serif;
     margin: 0;
     padding: 0;
+    text-shadow: -2px 0 orange, 0 2px orange, 2px 0 orange, 0 -2px orange;
 }
 
 #title-area {
@@ -32,7 +33,7 @@ body{
 #map-canvas {
     width: 100%;
     height: 100%;
-    background-color: red;
+    background-color: lightgray;
     /* transform: scaleY(-1); */
 }
 #app-area {
@@ -44,6 +45,8 @@ body{
 
 #map-area {
     flex-grow: 1 !important;
+    border:3px solid orange;
+    border-right:0px;
 }
 
 
@@ -51,7 +54,7 @@ body{
     /* display: flex; */
     flex-basis: 30%;
     flex-grow: 0;
-    border:1px solid black;
+    border:3px solid orange;
 }
 
 #list-area {
@@ -67,10 +70,10 @@ body{
 .robot-div {
     display: flex;
     align-items: center;
-    border:1px solid black;
+    /* border:1px solid black; */
     text-align: left;
     width: 100%;
-    height: 50%;
+    height: 15%;
     margin: 0px;
 }
 
@@ -81,9 +84,7 @@ body{
     float: left;
 }
 
-.robot-button,
-.robot-button:visited {
-
+.robot-text {
     display: flex;
     font-family: Arial, Helvetica, sans-serif;
     font-weight: bold;
@@ -92,7 +93,7 @@ body{
     justify-content: center;    
     width: 52.5%;
     text-decoration: none;
-
+    text-shadow: -0.5px 0 red, 0 0.5px red, 0.5px 0 red, 0 -0.5px red;
 }
 
 .status-image  {
@@ -100,22 +101,21 @@ body{
     height: 40%;
     width: 30%;
     float: right;
-    
 }
 
 #info-area {
     display: flex;
     margin: 0px;
     width: 100%;
-    height: 64%;
+    height: 80%;
     border: 1px solid black
 }
 
 #info-title {
     display:flex; 
-    border: 1px solid black;
-    border-bottom: 0px;
-    border-top: 2px solid black;
+    /* border: 1px solid black; */
+    /* border-bottom: 0px; */
+    /* border-top: 2px solid black; */
     font-family: Arial, Helvetica, sans-serif; 
     width: 100%; 
     height: 5%; 

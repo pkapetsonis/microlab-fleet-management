@@ -29,7 +29,10 @@ const robot = new fabric.Triangle({
     angle: 0,
     fill: 'black',
     originX: "center",
-    originY: "center"
+    originY: "center",
+    stroke: "red",
+    strokeWidth: 5,
+    cornerColor: "orange"
 });
 canvas.add(robot);
 
@@ -80,14 +83,6 @@ socket.on('data', function(data) {
 socket.on('data2', function(data) {
     console.log(data);
 });
-
-async function get_robot_data(robot_id) {
-    const response = await fetch(`info/${robot_id}`);
-
-    // Storing data in form of JSON
-    var data = await response.json();
-    robot_info_p.innerText = data['data'];
-}
 
 const socketc = io.connect();
 
