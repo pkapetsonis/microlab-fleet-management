@@ -66,8 +66,11 @@ canvas.on('mouse:move', function (e) {
 });
 
 var socket = io();
+let timeout;
+let statusb = false;
 socket.on('connect', function() {
     console.log("connected");
+    timeout = setTimeout(timedOutFunc, 1500);
 });
 
 socket.on('data', function(data) {
@@ -78,6 +81,12 @@ socket.on('data', function(data) {
     });
     robot.rotate(-data['heading'] + 90);
     canvas.renderAll();
+    refreshTimeout();
+    if(statusb == false) {
+        console.log("Online!");
+        document.getElementById("status-image").src="../static/images/online.png";
+        statusb = true;
+    }
 });
 
 socket.on('data2', function(data) {
@@ -93,3 +102,17 @@ canvas.on("mouse:dblclick", (event) => {
     console.log("pointer at", pointer);
     socketc.emit('datatest', pointer);
 });
+
+function timedOutFunc() {
+    if(statusb == true) {
+        console.log("Offline!");
+        document.getElementById("status-image").src="../static/images/offline.png";
+        statusb = false;
+    }
+    refreshTimeout();
+}
+
+function refreshTimeout() {
+    clearTimeout(timeout);
+    timeout = setTimeout(timedOutFunc, 1500);
+}

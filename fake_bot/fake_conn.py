@@ -4,7 +4,7 @@ import math
 import select
 
 
-UDP_IP = "192.168.1.198"
+UDP_IP = "192.168.1.15"
 UDP_PORT = 5005
 MESSAGE = b"Hello, World!\n"
 TRACK = 114

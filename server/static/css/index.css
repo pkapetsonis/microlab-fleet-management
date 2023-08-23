@@ -96,7 +96,7 @@ body{
     text-shadow: -0.5px 0 red, 0 0.5px red, 0.5px 0 red, 0 -0.5px red;
 }
 
-.status-image  {
+#status-image  {
     display: flex;
     height: 40%;
     width: 30%;

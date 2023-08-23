@@ -12,10 +12,10 @@ app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app)
 
 
-UDP_LISTEN_IP = '0.0.0.0'
+UDP_LISTEN_IP = '192.168.1.15'
 UDP_LISTEN_PORT = 5005
-UDP_IP = '192.168.1.156'
-UDP_PORT = 5005
+UDP_IP = '192.168.1.15'
+UDP_PORT = 5006
 SOCKET_TIMEOUT = 30
 
 listen_thread = None
