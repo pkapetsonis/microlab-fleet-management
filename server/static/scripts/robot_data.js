@@ -18,6 +18,8 @@ var circle = new fabric.Circle({
     top: 0,
     left: 0,
     radius: 5,
+    selectable: false,
+    evented: false
 });
 canvas.add(circle);
 
@@ -32,7 +34,8 @@ const robot = new fabric.Triangle({
     originY: "center",
     stroke: "red",
     strokeWidth: 5,
-    cornerColor: "orange"
+    selectable: false,
+    evented: false
 });
 canvas.add(robot);
 
@@ -68,22 +71,40 @@ canvas.on('mouse:move', function (e) {
 var socket = io();
 let timeout;
 let statusb = false;
+let lastPosX;
+let lastPosY;
+let PosX;
+let PosY;
 socket.on('connect', function() {
     console.log("connected");
     timeout = setTimeout(timedOutFunc, 1500);
 });
 
 socket.on('data', function(data) {
+    PosX = data['position'][0]; 
+    PosY = -data['position'][1];
     robot.set({
-        left: data['position'][0],
-        top: -data['position'][1]
+        left: PosX,
+        top: PosY
         // angle: -data['heading'] + 90
     });
+    if(typeof lastPosX === 'number') {
+        var line = new fabric.Line([lastPosX, lastPosY,PosX, PosY], {
+            stroke: 'black',
+            strokeWidth: 4,
+            selectable: false,
+            evented: false
+        });
+        lines.addWithUpdate(line);
+    }
+
+    lastPosX = PosX;
+    lastPosY = PosY;
+
     robot.rotate(-data['heading'] + 90);
     canvas.renderAll();
     refreshTimeout();
     if(statusb == false) {
-        console.log("Online!");
         document.getElementById("status-image").src="../static/images/online.png";
         statusb = true;
     }
@@ -105,9 +126,17 @@ canvas.on("mouse:dblclick", (event) => {
 
 function timedOutFunc() {
     if(statusb == true) {
-        console.log("Offline!");
         document.getElementById("status-image").src="../static/images/offline.png";
         statusb = false;
+        var line = new fabric.Line([lastPosX, lastPosY,PosX, PosY], {
+            stroke: 'black',
+            strokeWidth: 4,
+            selectable: false,
+            evented: false
+        });
+        lastPosX = undefined;
+        lastPosY = undefined;
+        lines.addWithUpdate(line);
     }
     refreshTimeout();
 }
@@ -116,3 +145,12 @@ function refreshTimeout() {
     clearTimeout(timeout);
     timeout = setTimeout(timedOutFunc, 1500);
 }
+
+var lines = new fabric.Group()
+canvas.add(lines);
+
+document.getElementById('clear-path-b').onclick = function() {
+    lines._objects.length = 0;
+    lines.addWithUpdate();
+    canvas.renderAll();
+};
