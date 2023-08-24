@@ -1,15 +1,14 @@
-from flask import Flask, render_template, jsonify, request
-from flask_socketio import SocketIO, emit
-from threading import Thread
-from map.read_wkt_csv import read_wkt_csv
-from map.main import load_geometry, pathfind
 import shapely
-from shapely import Point
 import socket
 import time
 import json
 import logging
-import os
+from flask import Flask, render_template, jsonify, request, redirect
+from flask_socketio import SocketIO, emit
+from threading import Thread
+from map.read_wkt_csv import read_wkt_csv
+from map.main import load_geometry, pathfind
+from shapely import Point
 
 
 
@@ -20,13 +19,15 @@ socketio = SocketIO(app)
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 
+#------------------CONFIG----------------------
 UDP_LISTEN_IP = '0.0.0.0'
 UDP_LISTEN_PORT = 5005
 UDP_IP = '192.168.1.156'
 UDP_PORT = 5005
 SOCKET_TIMEOUT = 30
-
 MAP_FILE = 'server/map/map.csv'
+REQUIRE_LOGIN = False
+#----------------------------------------------
 
 listen_thread = None
 def create_listen_thread():
@@ -101,14 +102,26 @@ def on_message(msg):
     
 @app.route("/")
 def index():
-    return render_template("index.html")
+    if REQUIRE_LOGIN:
+        return redirect("/login")
+    else:
+        return redirect("/home")
 
-polygons = []
+    
+
+@app.route("/login")
+def login():
+    return render_template("login.html")
+
+@app.route("/home")
+def home():
+    return render_template("index.html")
 
 @app.route('/getmap', methods = ['GET', 'POST'])
 def sendmap():
     if(request.method == 'GET'):
         geography = read_wkt_csv("server/map/map.csv")
+        polygons = []
 
         for p in geography:
             poly = []

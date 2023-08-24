@@ -1,0 +1,88 @@
+body{
+  width: 100vw;
+  height: 100vh;
+  margin: 0px;
+  background-color: gold;
+}
+
+.login-dark {
+  height:auto;
+  position:relative;
+  top: 45%;
+}
+
+h1 {
+  font-size: 30px;
+  font-weight: 800;
+  color: orange;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.login-bg {
+  background-size:cover;
+}
+
+.login-dark form {
+  max-width:320px;
+  width:90%;
+  background-color:#1e2833;
+  padding:60px;
+  border-radius:4px;
+  transform:translate(-50%, -50%);
+  position:absolute;
+  opacity: 1;
+  top:25%;
+  left:50%;
+  color:#fff;
+  box-shadow:3px 3px 4px rgba(0,0,0,0.2);
+}
+
+.login-dark .illustration {
+  text-align:center;
+  /* padding:15px 0 20px; */
+  font-size:70px;
+  color:#2980ef;
+}
+
+.login-dark form .form-control {
+  background:none;
+  border:none;
+  border-bottom:1px solid #434a52;
+  border-radius:0;
+  box-shadow:none;
+  outline:none;
+  color:inherit;
+}
+
+.login-dark form .btn-primary {
+  cursor: pointer;
+
+  border: none;
+  border-radius: 8px;
+
+  box-shadow: 2px 2px 7px gold;
+
+  background: orange;
+  color: rgba(255, 255, 255, 0.8);
+
+  width: 80px;
+
+  transition: all 0.5s;
+
+  margin: 0;
+  position: absolute;
+  top: 91.5%;
+  left: 50%;
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+}
+
+.login-dark form .btn-primary:hover, .login-dark form .btn-primary:active {
+  background:#214a80;
+  outline:none;
+}
+
+.login-dark form .btn-primary:active {
+  transform:translateY(1px);
+}
