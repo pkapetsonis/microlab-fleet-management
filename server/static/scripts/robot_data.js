@@ -1,12 +1,18 @@
+// make all canvas objects not selectable by default
+fabric.Object.prototype.selectable = false;
+
+// compute canvas size
 const map_area = document.querySelector("#map-area");
 const maw = map_area.clientWidth;
 const mah = map_area.clientHeight;
 
 console.log({maw, mah});
+// initialize fabric.js canvas
 const canvas_dom = document.querySelector("#map-canvas");
 canvas_dom.setAttribute("width", maw);
 canvas_dom.setAttribute("height", mah);
 const canvas = new fabric.Canvas('map-canvas', {width: maw, height: mah});
+// finetune view matrix
 canvas.viewportTransform[4] = canvas.width / 2;
 canvas.viewportTransform[5] = canvas.height / 2;
 canvas.viewportTransform[0] = 0.5;
@@ -146,7 +152,10 @@ function refreshTimeout() {
     timeout = setTimeout(timedOutFunc, 1500);
 }
 
-var lines = new fabric.Group()
+var lines = new fabric.Group({
+    selectable: false,
+    evented: false
+});
 canvas.add(lines);
 
 document.getElementById('clear-path-b').onclick = function() {
@@ -154,3 +163,25 @@ document.getElementById('clear-path-b').onclick = function() {
     lines.addWithUpdate();
     canvas.renderAll();
 };
+
+async function getmap() {
+    const response = await fetch("/getmap");
+    var polygons = await response.json();
+
+    fjs_polys = polygons.map((ar) => {
+        // console.log(ar);
+        const points = ar.map(xy => ({x: xy[0], y: -xy[1]}));
+        console.log(points);
+
+        var polygon = new fabric.Polygon(points, {
+            fill: 'green'
+        });
+      
+        canvas.add(polygon);
+        
+    });
+
+    canvas.renderAll();
+}
+
+getmap();
