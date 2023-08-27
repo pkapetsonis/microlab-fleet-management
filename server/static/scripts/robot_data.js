@@ -6,6 +6,7 @@ const map_area = document.querySelector("#map-area");
 const maw = map_area.clientWidth;
 const mah = map_area.clientHeight;
 
+const status_img = document.getElementById("status-image");
 console.log({maw, mah});
 // initialize fabric.js canvas
 const canvas_dom = document.querySelector("#map-canvas");
@@ -18,7 +19,13 @@ canvas.viewportTransform[5] = canvas.height / 2;
 canvas.viewportTransform[0] = 0.5;
 canvas.viewportTransform[3] = 0.5;
 
+// var lines = new fabric.Group({
+//     selectable: false,
+//     evented: false
+// });
+// canvas.add(lines);
 
+var lines = []
 
 var circle = new fabric.Circle({
     top: 0,
@@ -81,27 +88,39 @@ let lastPosX;
 let lastPosY;
 let PosX;
 let PosY;
+
+let lastDataTimestamp = Date.now();
+
+
 socket.on('connect', function() {
     console.log("connected");
-    timeout = setTimeout(timedOutFunc, 1500);
+    interv = setInterval(timedOutFunc, 1500);
 });
 
 socket.on('data', function(data) {
     PosX = data['position'][0]; 
     PosY = -data['position'][1];
+
+    lastDataTimestamp = Date.now();
     robot.set({
         left: PosX,
         top: PosY
         // angle: -data['heading'] + 90
     });
-    if(typeof lastPosX === 'number') {
+
+    // console.log('aaaa', Math.hypot(PosX - lastPosX, PosY-lastPosY));
+
+    if(Math.hypot(PosX - lastPosX, PosY-lastPosY) > 3) {
         var line = new fabric.Line([lastPosX, lastPosY,PosX, PosY], {
             stroke: 'black',
             strokeWidth: 4,
             selectable: false,
             evented: false
         });
-        lines.addWithUpdate(line);
+        canvas.add(line);
+        lines.push(line);
+        // lines.addWithUpdate(line);
+        //lines.add(line);
     }
 
     lastPosX = PosX;
@@ -109,11 +128,10 @@ socket.on('data', function(data) {
 
     robot.rotate(-data['heading'] + 90);
     canvas.renderAll();
-    refreshTimeout();
-    if(statusb == false) {
-        document.getElementById("status-image").src="../static/images/online.png";
-        statusb = true;
-    }
+    // if(statusb == false) {
+    //     status_img.src="../static/images/online.png";
+    //     statusb = true;
+    // }
 });
 
 socket.on('data2', function(data) {
@@ -131,36 +149,33 @@ canvas.on("mouse:dblclick", (event) => {
 });
 
 function timedOutFunc() {
-    if(statusb == true) {
-        document.getElementById("status-image").src="../static/images/offline.png";
+    const diff = Date.now() - lastDataTimestamp;
+    if(diff > 1500) {
+        status_img.src="../static/images/offline.png";
         statusb = false;
-        var line = new fabric.Line([lastPosX, lastPosY,PosX, PosY], {
-            stroke: 'black',
-            strokeWidth: 4,
-            selectable: false,
-            evented: false
-        });
+
+        // var line = new fabric.Line([lastPosX, lastPosY,PosX, PosY], {
+        //     stroke: 'black',
+        //     strokeWidth: 4,
+        //     selectable: false,
+        //     evented: false
+        // });
         lastPosX = undefined;
         lastPosY = undefined;
-        lines.addWithUpdate(line);
+        // lines.add(line);
     }
-    refreshTimeout();
+    else {
+        status_img.src="../static/images/online.png";
+    }
 }
 
-function refreshTimeout() {
-    clearTimeout(timeout);
-    timeout = setTimeout(timedOutFunc, 1500);
-}
 
-var lines = new fabric.Group({
-    selectable: false,
-    evented: false
-});
-canvas.add(lines);
 
 document.getElementById('clear-path-b').onclick = function() {
+    lines.forEach(l => canvas.remove(l));
     lines._objects.length = 0;
-    lines.addWithUpdate();
+    //lines.
+    // lines.addWithUpdate();
     canvas.renderAll();
 };
 
@@ -174,7 +189,9 @@ async function getmap() {
         console.log(points);
 
         var polygon = new fabric.Polygon(points, {
-            fill: 'green'
+            fill: 'green',
+            selectable: false,
+            evented: false
         });
       
         canvas.add(polygon);

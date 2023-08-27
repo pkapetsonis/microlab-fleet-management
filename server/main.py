@@ -81,8 +81,10 @@ def on_message(msg):
 
     # points = [(x, y)]
     
-    path = pathfind(shapely.Point(*current_robot_position), shapely.Point(x, y), tree, point_objects)
-    points = list(path.coords)
+    path = pathfind(shapely.Point(*map(int, current_robot_position)), shapely.Point(x, y), tree, point_objects)
+    if path is None:
+        return
+    points = list(path.coords)[1:]
     # print(list(path.coords))
 
 
