@@ -20,9 +20,9 @@ btn = Button()
 
 
 BIND_IP = '0.0.0.0'
-UDP_IP = "192.168.1.103"
+# UDP_IP = "192.168.1.103"
+UDP_IP = "192.168.2.2"
 UDP_PORT = 5005
-MESSAGE = b"Hello, World!\n"
 TRACK = 114
 UPDATE_TIMER = 0.200 # ms
 
@@ -37,6 +37,7 @@ drive_base.left_motor.reset()
 drive_base.right_motor.reset()
 
 drive_base.gyro = MyGyroSensor()
+drive_base.gyro.reset()
 drive_base.gyro.calibrate()
 drive_base.gyro.reset()
 

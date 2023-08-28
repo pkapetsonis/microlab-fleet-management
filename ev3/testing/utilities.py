@@ -105,7 +105,7 @@ class MyMoveDifferential(MoveDifferential):
     def follow_until_point(self, slf, px_mm, py_mm):
         DIST_ERROR = 3
         d = math.sqrt(pow(self.x_pos_mm - px_mm, 2) + pow(self.y_pos_mm - py_mm, 2)) 
-        print("dist:", d)
+        # print("dist:", d)
         return d > DIST_ERROR
 
 

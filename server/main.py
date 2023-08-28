@@ -22,7 +22,7 @@ log.setLevel(logging.ERROR)
 #------------------CONFIG----------------------
 UDP_LISTEN_IP = '0.0.0.0'
 UDP_LISTEN_PORT = 5005
-UDP_IP = '192.168.1.156'
+UDP_IP = '192.168.2.4'
 UDP_PORT = 5005
 SOCKET_TIMEOUT = 30
 MAP_FILE = 'server/map/map.csv'
