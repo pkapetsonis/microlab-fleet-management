@@ -47,13 +47,9 @@ def send_udp():
     gca = drive_base.gyro.circle_angle()
     theta_wheels = drive_base.theta_wheels
 
-    sock.sendto("angle: {}\ngyro: {}\npos: ( {}, {})\n".format(
-        math.degrees(theta_wheels),
-        gca, 
-        drive_base.x_pos_mm, 
-        drive_base.y_pos_mm).encode(),
-        (UDP_IP, UDP_PORT)
-    )
+    msg = json.dumps({"angle":math.degrees(theta_wheels), "gyro":gca, "posx":drive_base.x_pos_mm, "posy": drive_base.y_pos_mm})
+
+    sock.sendto(msg.encode(), (UDP_IP, UDP_PORT))
 
 
 

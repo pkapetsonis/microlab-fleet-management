@@ -54,12 +54,10 @@ def listen_proxy_thread():
             try:
                 data, addr = sock.recvfrom(1024)
                 data = data.decode()
-                # 
-                # print(addr, data)
-                data = data.split('\n')
+                data = json.loads(data)
                 payload = {
-                    'heading': float(data[1].split(' ')[1]),
-                    'position': [float(x) for x in data[2][data[2].find('(')+1:-1].split(',')]
+                    'heading': data["gyro"],
+                    'position': [data["posx"], data["posy"]]
                 }
                 current_robot_position = payload['position']
 
