@@ -26,7 +26,7 @@ UDP_IP = '192.168.2.4'
 UDP_PORT = 5005
 SOCKET_TIMEOUT = 30
 MAP_FILE = 'server/map/map.csv'
-REQUIRE_LOGIN = False
+REQUIRE_LOGIN = True
 #----------------------------------------------
 
 listen_thread = None
