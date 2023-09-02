@@ -101,10 +101,10 @@ body{
 }
 
 #info-area {
-    display: flex;
+    /* display: flex; */
     margin: 0px;
     width: 100%;
-    height: 74%;
+    height: 50%;
     border: 1px solid black
 }
 
@@ -121,25 +121,48 @@ body{
     margin: 0px;
 }
 
-#clear-path-b {
+.info-paragraphs {
+    display:flex; 
+    /* border: 1px solid black; */
+    /* border-bottom: 0px; */
+    /* border-top: 2px solid black; */
+    font-family: Arial, Helvetica, sans-serif; 
+    font-weight: bold;
+    width: 100%; 
+    justify-content: center; 
+    margin: 0px;
+}
+
+#info-table {
+    display:flex; 
+    /* border: 1px solid black; */
+    /* border-bottom: 0px; */
+    /* border-top: 2px solid black; */
+    font-family: Arial, Helvetica, sans-serif; 
+    width: 100%; 
+    justify-content: center; 
+    margin: 0px;
+}
+
+button {
     /* margin: 0px; */
     display: flex;
-    height: 6%;
+    height: 10%;
     width: 100%;
     justify-content: center; 
     align-items: center; 
     background-color: orange;
     font-family: Arial, Helvetica, sans-serif; 
     font-weight: bolder;
-    border: none;
-    border-radius: 12px;
+    /* border: none; */
+    /* border-radius: 12px; */
     top: 50%;
 }
 
-#clear-path-b:hover {
+button:hover {
     background-color:palegoldenrod;
 }
 
-#clear-path-b:active {
+button:active {
     background-color: goldenrod;
 }

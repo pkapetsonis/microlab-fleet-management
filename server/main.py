@@ -53,13 +53,18 @@ def listen_proxy_thread():
         while run:
             try:
                 data, addr = sock.recvfrom(1024)
-                data = data.decode()
-                data = json.loads(data)
+                raw_data = data.decode()
+                data = json.loads(raw_data)
                 payload = {
                     'heading': data["gyro"],
-                    'position': [data["posx"], data["posy"]]
+                    'position': [data["posx"], data["posy"]],
+                    'left_motor_speed': data["speedr"],
+                    'right_motor_speed': data["speedl"],
+                    'left_motor_state': data["statel"],
+                    'right_motor_state': data["stater"],
+                    'voltage': str(round(float(data["voltage"]),2))
                 }
-                current_robot_position = payload['position']
+                current_robot_position = [data["posx"], data["posy"]]
 
 
                 emit('data', payload, broadcast=True, namespace='/')
@@ -71,7 +76,7 @@ def listen_proxy_thread():
 
         sock.close()
 
-@socketio.on('datatest')
+@socketio.on('coords')
 def on_message(msg):
     global com
     x = int(msg.get('x'))
@@ -96,9 +101,28 @@ def on_message(msg):
     #         'type': 'stop',
     #     }
     
-    print(command)
     sock.sendto(json.dumps(command).encode(), (UDP_IP, UDP_PORT))
 
+@socketio.on('clear')
+def on_message():
+    command = {
+        'type': 'clear'
+    }
+    sock.sendto(json.dumps(command).encode(), (UDP_IP, UDP_PORT))
+
+@socketio.on('pause')
+def on_message():
+    command = {
+        'type': 'pause'
+    }
+    sock.sendto(json.dumps(command).encode(), (UDP_IP, UDP_PORT))
+
+@socketio.on('resume')
+def on_message():
+    command = {
+        'type': 'resume'
+    }
+    sock.sendto(json.dumps(command).encode(), (UDP_IP, UDP_PORT))
     
 @app.route("/")
 def index():
@@ -106,8 +130,6 @@ def index():
         return redirect("/login")
     else:
         return redirect("/home")
-
-    
 
 @app.route("/login")
 def login():
@@ -129,11 +151,8 @@ def sendmap():
                 poly.append(c)
             polygons.append(poly)
 
-        # print(polygons)
-        # print(len(polygons))
         return polygons
 
-    # return ""
 
 if __name__ == '__main__':
     # app.run(port=5000, debug=True)
@@ -142,8 +161,6 @@ if __name__ == '__main__':
     logging.getLogger('engineio').setLevel(logging.ERROR)
     logging.getLogger('geventwebsocket.handler').setLevel(logging.ERROR)
 
-    
- 
     with app.app_context():
         create_listen_thread()
     socketio.run(host='0.0.0.0', app=app, port=5000, log_output=False, debug=False, use_reloader=False)

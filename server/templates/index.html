@@ -29,11 +29,37 @@
                 <h3 class="robot-text" >EV3 Robot</h3>
                 <img id="status-image" src="{{ url_for('static', filename='images/offline.png') }}" alt="">
             </div>
+
             <h3 id="info-title">Robot Info:</h3>
             <div id="info-area">
-                <h3 style="width:100%; text-align: center; font-family: Arial, Helvetica, sans-serif; color: red;">Robot data will be available here!</h3>
+                <!-- <h3 style="width:100%; text-align: center; font-family: Arial, Helvetica, sans-serif; color: red;">Robot data will be available here!</h3> -->
+                <table id="info-table" class="info-displays">
+                    <tr>
+                      <th>Motor:</th>
+                      <th>Speed:</th>
+                      <th>Status:</th>
+                    </tr>
+                    <tr>
+                      <td style="font-weight: bold;">Left:</td>
+                      <td id = "l-motor-sp">N/A</td>
+                      <td id = "l-motor-st">N/A</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold;">Right</td>
+                        <td id = "r-motor-sp">N/A</td>
+                        <td id = "r-motor-st">N/A</td>
+                    </tr>
+                  </table> 
+                  <p class="info-paragraphs">Voltage: <span style="font-weight: normal;" id="voltage-sp"> N/A</span></p>
+                  <p class="info-paragraphs">Coordinates: <span style="font-weight: normal;" id="coords-sp"> N/A</span></p>
+
             </div>
-            <button id="clear-path-b" type="button">Clear Past Route</button> 
+            <button id="clear-n-route" type="button">Clear Next Route</button>
+            <div style="display: flex; height: 10%; width: 100%">
+                <button id="pause-b" style="width: 50%; height: 100%;" type="button">Pause</button>
+                <button id="resume-b" style="width: 50%; height: 100%;" type="button">Resume</button> 
+            </div>
+            <button id="clear-p-route" type="button">Clear Past Route</button> 
         </div>
     </div>    
 </body>

@@ -105,10 +105,8 @@ socket.on('data', function(data) {
     robot.set({
         left: PosX,
         top: PosY
-        // angle: -data['heading'] + 90
     });
 
-    // console.log('aaaa', Math.hypot(PosX - lastPosX, PosY-lastPosY));
 
     if(Math.hypot(PosX - lastPosX, PosY-lastPosY) > 3) {
         var line = new fabric.Line([lastPosX, lastPosY,PosX, PosY], {
@@ -119,8 +117,6 @@ socket.on('data', function(data) {
         });
         canvas.add(line);
         lines.push(line);
-        // lines.addWithUpdate(line);
-        //lines.add(line);
     }
 
     lastPosX = PosX;
@@ -128,14 +124,14 @@ socket.on('data', function(data) {
 
     robot.rotate(-data['heading'] + 90);
     canvas.renderAll();
-    // if(statusb == false) {
-    //     status_img.src="../static/images/online.png";
-    //     statusb = true;
-    // }
-});
 
-socket.on('data2', function(data) {
-    console.log(data);
+    document.getElementById("l-motor-sp").innerHTML = data["left_motor_speed"];
+    document.getElementById("l-motor-st").innerHTML = data["left_motor_state"];
+    document.getElementById("r-motor-sp").innerHTML = data["right_motor_speed"];
+    document.getElementById("r-motor-st").innerHTML = data["right_motor_state"];
+    document.getElementById("voltage-sp").innerHTML = data["voltage"];
+    document.getElementById("coords-sp").innerHTML = (`X: ${Math.round(PosX)}  Y: ${Math.round(PosY)}`);
+
 });
 
 const socketc = io.connect();
@@ -144,8 +140,7 @@ const socketc = io.connect();
 // send data on click
 canvas.on("mouse:dblclick", (event) => {
     var pointer = canvas.getPointer(event);
-    console.log("pointer at", pointer);
-    socketc.emit('datatest', pointer);
+    socketc.emit('coords', pointer);
 });
 
 function timedOutFunc() {
@@ -154,15 +149,15 @@ function timedOutFunc() {
         status_img.src="../static/images/offline.png";
         statusb = false;
 
-        // var line = new fabric.Line([lastPosX, lastPosY,PosX, PosY], {
-        //     stroke: 'black',
-        //     strokeWidth: 4,
-        //     selectable: false,
-        //     evented: false
-        // });
         lastPosX = undefined;
         lastPosY = undefined;
-        // lines.add(line);
+
+        document.getElementById("l-motor-sp").innerHTML = "N/A";
+        document.getElementById("l-motor-st").innerHTML = "N/A";
+        document.getElementById("r-motor-sp").innerHTML = "N/A";
+        document.getElementById("r-motor-st").innerHTML = "N/A";
+        document.getElementById("voltage-sp").innerHTML = "N/A";
+        document.getElementById("coords-sp").innerHTML = "X: N/A Y: N/A";
     }
     else {
         status_img.src="../static/images/online.png";
@@ -171,12 +166,22 @@ function timedOutFunc() {
 
 
 
-document.getElementById('clear-path-b').onclick = function() {
+document.getElementById('clear-p-route').onclick = function() {
     lines.forEach(l => canvas.remove(l));
     lines._objects.length = 0;
-    //lines.
-    // lines.addWithUpdate();
     canvas.renderAll();
+};
+
+document.getElementById('clear-n-route').onclick = function() {
+    socketc.emit("clear");
+};
+
+document.getElementById('pause-b').onclick = function() {
+    socketc.emit("pause");
+};
+
+document.getElementById('resume-b').onclick = function() {
+    socketc.emit("resume");
 };
 
 async function getmap() {
