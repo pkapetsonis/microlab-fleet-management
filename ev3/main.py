@@ -76,7 +76,6 @@ class CommandExecutor:
         while self.running:
             if len(self.command_queue) != 0:
                 self.queue_sem.acquire()
-                print("1")
                 command = self.command_queue.pop(0)
                 # target_pos = command['waypoints']
                 for target_x, target_y in command['waypoints']:
@@ -94,6 +93,12 @@ class CommandExecutor:
     def clear_queue(self):
         self.command_queue = []
         # self.queue_sem.release()
+
+    def pause(self):
+        drive_base.pause()
+    
+    def resume(self):
+        drive_base.resume()
 
 cex = CommandExecutor()
 
@@ -115,6 +120,10 @@ def send_upd_thread():
                 cex.add_command(command)
             elif command['type'] == 'clear':
                 cex.clear_queue()
+            elif command['type'] == 'pause':
+                cex.pause()
+            elif command['type'] == 'resume':
+                cex.resume()
             else:
                 cex.stop()
             

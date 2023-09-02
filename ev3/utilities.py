@@ -19,6 +19,12 @@ class MyMoveDifferential(MoveDifferential):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.theta_wheels = 0
+        self.paused = False
+    
+    def pause(self):
+        self.paused = True
+    def resume(self):
+        self.paused = False
 
     def odometry_start(self, theta_degrees_start=90.0, x_pos_start=0.0, y_pos_start=0.0, sleep_time=0.005):  # 5ms
             """
@@ -212,38 +218,41 @@ class MyMoveDifferential(MoveDifferential):
         speed_native_units = speed.to_native_units(self.left_motor)
 
         while follow_for(self, **kwargs):
-            current_angle = self._gyro.circle_angle()
-            target_angle = self.get_target_circle_angle(kwargs['px_mm'], kwargs['py_mm'])
-            error = current_angle - target_angle
-            # error = error % 360
-            # if error > 180:
-            #     error = 360 - error
+            if self.paused == False:
+                current_angle = self._gyro.circle_angle()
+                target_angle = self.get_target_circle_angle(kwargs['px_mm'], kwargs['py_mm'])
+                error = current_angle - target_angle
+                # error = error % 360
+                # if error > 180:
+                #     error = 360 - error
 
-            error = -error
+                error = -error
 
-            integral = integral + error
-            derivative = error - last_error
-            last_error = error
-            turn_native_units = (kp * error) + (ki * integral) + (kd * derivative)
-            # print("speed native", speed_native_units)
-            # print("current", current_angle)
-            # print("target", target_angle)
-            # print("error", error, "pos: ", (self.x_pos_mm, self.y_pos_mm))
-            left_speed = SpeedNativeUnits(speed_native_units - turn_native_units)
-            right_speed = SpeedNativeUnits(speed_native_units + turn_native_units)
-            # print(left_speed, right_speed)
-            if sleep_time:
-                time.sleep(sleep_time)
+                integral = integral + error
+                derivative = error - last_error
+                last_error = error
+                turn_native_units = (kp * error) + (ki * integral) + (kd * derivative)
+                # print("speed native", speed_native_units)
+                # print("current", current_angle)
+                # print("target", target_angle)
+                # print("error", error, "pos: ", (self.x_pos_mm, self.y_pos_mm))
+                left_speed = SpeedNativeUnits(speed_native_units - turn_native_units)
+                right_speed = SpeedNativeUnits(speed_native_units + turn_native_units)
+                # print(left_speed, right_speed)
+                if sleep_time:
+                    time.sleep(sleep_time)
 
-            try:
-                self.on(left_speed, right_speed)
-            except SpeedInvalid as e:
-                #log.exception(e)
-                self.stop()
-                # raise FollowGyroAngleErrorTooFast("The robot is moving too fast to follow the angle")
-                return
+                try:
+                    self.on(left_speed, right_speed)
+                except SpeedInvalid as e:
+                    #log.exception(e)
+                    self.stop()
+                    # raise FollowGyroAngleErrorTooFast("The robot is moving too fast to follow the angle")
+                    return
+            else:
+                self.left_motor.stop()
+                self.right_motor.stop()
         self.stop()
-
 
 class MyGyroSensor(GyroSensor):
 
